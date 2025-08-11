@@ -1,6 +1,6 @@
 {
   "type": "extension",
-  "name": "azure_v2v_python",
+  "name": "azure_mllm_python",
   "version": "0.1.0",
   "dependencies": [
     {

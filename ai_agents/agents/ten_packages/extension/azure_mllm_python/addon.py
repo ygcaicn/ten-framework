@@ -12,11 +12,11 @@ from ten_runtime import (
 )
 
 
-@register_addon_as_extension("azure_v2v_python")
+@register_addon_as_extension("azure_mllm_python")
 class AzureRealtimeExtensionAddon(Addon):
 
     def on_create_instance(self, ten_env: TenEnv, name: str, context) -> None:
-        from .extension import AzureRealtimeExtension
+        from .extension import AzureRealtime2Extension
 
         ten_env.log_info("AzureRealtimeExtensionAddon on_create_instance")
-        ten_env.on_create_instance_done(AzureRealtimeExtension(name), context)
+        ten_env.on_create_instance_done(AzureRealtime2Extension(name), context)
