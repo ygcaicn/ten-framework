@@ -1,14 +1,11 @@
 from datetime import datetime
-import json
 import os
-import asyncio
 from typing import Optional, Dict, Any
 
 from typing_extensions import override
 from .const import (
     DUMP_FILE_NAME,
     MODULE_NAME_ASR,
-    TIMEOUT_CODE,
 )
 from ten_ai_base.asr import (
     ASRBufferConfig,
@@ -80,6 +77,13 @@ class XfyunASRExtension(AsyncASRBaseExtension):
 
         # Callback instance
         self.recognition_callback: Optional[XfyunRecognitionCallback] = None
+
+    @override
+    async def on_deinit(self, ten_env: AsyncTenEnv) -> None:
+        await super().on_deinit(ten_env)
+        if self.audio_dumper:
+            await self.audio_dumper.stop()
+            self.audio_dumper = None
 
     @override
     def vendor(self) -> str:
@@ -419,7 +423,7 @@ class XfyunASRExtension(AsyncASRBaseExtension):
             await self._handle_reconnect()
 
     @override
-    async def finalize(self, session_id: str | None) -> None:
+    async def finalize(self, _session_id: str | None) -> None:
         """Finalize recognition"""
         assert self.config is not None
 
@@ -523,9 +527,6 @@ class XfyunASRExtension(AsyncASRBaseExtension):
                 self.audio_buffer_manager.reset()
                 self.ten_env.log_debug("Audio buffer manager reset")
 
-            if self.audio_dumper:
-                await self.audio_dumper.stop()
-
         except Exception as e:
             self.ten_env.log_error(f"Error stopping Xfyun ASR connection: {e}")
 
@@ -553,7 +554,7 @@ class XfyunASRExtension(AsyncASRBaseExtension):
         return self.config.sample_rate
 
     @override
-    async def send_audio(self, frame: AudioFrame, session_id: str | None) -> bool:
+    async def send_audio(self, frame: AudioFrame, _session_id: str | None) -> bool:
         """Send audio data"""
         assert self.config is not None
 

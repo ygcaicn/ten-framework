@@ -6,7 +6,6 @@ from typing_extensions import override
 from .const import (
     DUMP_FILE_NAME,
     MODULE_NAME_ASR,
-    TIMEOUT_CODE,
 )
 from ten_ai_base.asr import (
     ASRBufferConfig,
@@ -82,6 +81,13 @@ class XfyunDialectASRExtension(AsyncASRBaseExtension):
 
         # Audio buffer manager
         self.audio_buffer_manager: Optional[AudioBufferManager] = None
+
+    @override
+    async def on_deinit(self, ten_env: AsyncTenEnv) -> None:
+        await super().on_deinit(ten_env)
+        if self.audio_dumper:
+            await self.audio_dumper.stop()
+            self.audio_dumper = None
 
     @override
     def vendor(self) -> str:
@@ -470,9 +476,6 @@ class XfyunDialectASRExtension(AsyncASRBaseExtension):
             self.recognition_callback = None
             self.connected = False
             self.ten_env.log_info("Xfyun ASR connection stopped")
-
-            if self.audio_dumper:
-                await self.audio_dumper.stop()
 
         except Exception as e:
             self.ten_env.log_error(f"Error stopping Xfyun ASR connection: {e}")
