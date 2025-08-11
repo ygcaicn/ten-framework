@@ -29,7 +29,6 @@ class AsyncOpenAIAsrListener:
         """
         server error.
         """
-        pass
 
     async def on_asr_client_error(
         self, response: Any, error: Exception | None = None
@@ -37,31 +36,26 @@ class AsyncOpenAIAsrListener:
         """
         client capture the error.
         """
-        pass
 
     async def on_asr_delta(self, response: TranscriptionResultDelta):
         """
         delta of the transcription.
         """
-        pass
 
     async def on_asr_completed(self, response: TranscriptionResultCompleted):
         """
         completed of the transcription.
         """
-        pass
 
     async def on_asr_committed(self, response: TranscriptionResultCommitted):
         """
         committed of the transcription.
         """
-        pass
 
     async def on_other_event(self, response: dict):
         """
         other event.
         """
-        pass
 
 
 class OpenAIAsrClient(WebSocketClient):
@@ -249,7 +243,6 @@ class OpenAIAsrClient(WebSocketClient):
 
 
 if __name__ == "__main__":
-    import os
     from pathlib import Path
 
     async def send_audio_data(client: OpenAIAsrClient):

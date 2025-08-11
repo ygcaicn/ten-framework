@@ -68,7 +68,6 @@ class WebSocketClient(ABC):
     # Abstract methods
     async def on_open(self):
         """Called when WebSocket connection is successfully established."""
-        pass
 
     @abstractmethod
     async def on_message(self, message: str | bytes):
@@ -77,19 +76,15 @@ class WebSocketClient(ABC):
 
     async def on_close(self, code: int, reason: str):
         """Called when WebSocket connection is closed."""
-        pass
 
     async def on_error(self, error: Exception):
         """Called when a connection or communication error occurs."""
-        pass
 
     async def on_disconnect(self):
         """Called when the client is disconnected."""
-        pass
 
     async def on_reconnect(self):
         """Called before reconnecting."""
-        pass
 
     # Internal methods
 
@@ -170,7 +165,7 @@ class WebSocketClient(ABC):
                     sender_task = asyncio.create_task(self._sender_handler())
                     keep_alive_task = asyncio.create_task(self._keep_alive_handler())
 
-                    done, pending = await asyncio.wait(
+                    _, pending = await asyncio.wait(
                         [receiver_task, sender_task, keep_alive_task],
                         return_when=asyncio.FIRST_COMPLETED,
                     )
@@ -194,28 +189,26 @@ class WebSocketClient(ABC):
                     f"An unexpected error occurred in the main loop: {e}"
                 )
                 await self.on_error(e)
-            finally:
-                ...
 
             if not self._shutdown_event.is_set():
                 if not self._auto_reconnect:
                     msg = "Reconnect is disabled."
                     self._logger.warning(msg)
-                    raise Exception(msg)
+                    raise RuntimeError(msg)
                 if (
                     self._reconnect_max_retries > 0
                     and self._reconnect_retries > self._reconnect_max_retries
                 ):
                     msg = f"Reached maximum reconnection attempts ({self._reconnect_max_retries}). Giving up."
                     self._logger.warning(msg)
-                    raise Exception(msg)
+                    raise RuntimeError(msg)
                 if (
                     self._reconnect_timeout > 0
                     and self._reconnect_total_delay > self._reconnect_timeout
                 ):
                     msg = f"Reached maximum reconnection timeout ({self._reconnect_timeout}). Giving up."
                     self._logger.warning(msg)
-                    raise Exception(msg)
+                    raise RuntimeError(msg)
 
                 await asyncio.sleep(self._reconnect_delay)
                 self._reconnect_total_delay += self._reconnect_delay
