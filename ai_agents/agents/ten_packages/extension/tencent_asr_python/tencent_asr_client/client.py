@@ -16,7 +16,6 @@ class AsyncTencentAsrListener:
         """
         response.result is tencent asr server error.
         """
-        pass
 
     async def on_asr_error(
         self, response: ResponseData[str], error: Exception | None = None
@@ -27,34 +26,29 @@ class AsyncTencentAsrListener:
         response.voice_id is the voice_id of the request.
         response.result is the Exception instance.
         """
-        pass
 
     async def on_asr_sentence_start(self, response: ResponseData[RecoginizeResult]):
         """
         response.result is the RecoginizeResult instance.
         response.result.slice_type is SliceType.START.
         """
-        pass
 
     async def on_asr_sentence_change(self, response: ResponseData[RecoginizeResult]):
         """
         response.result is the RecoginizeResult instance.
         response.result.slice_type is SliceType.PROCESSING.
         """
-        pass
 
     async def on_asr_sentence_end(self, response: ResponseData[RecoginizeResult]):
         """
         response.result is the RecoginizeResult instance.
         response.result.slice_type is SliceType.END.
         """
-        pass
 
     async def on_asr_complete(self, response: ResponseData[RecoginizeResult]):
         """
         response.final is True.
         """
-        pass
 
 
 class TencentAsrListener:
@@ -153,7 +147,7 @@ class TencentAsrClient(WebSocketClient):
             if response.code in (4001, 4002, 4003, 4004, 4005, 4006):
                 # fatal error, stop the client
                 await self.stop()
-                raise Exception(response.message)
+                raise RuntimeError(response.message)
 
             return
 
@@ -223,9 +217,7 @@ if __name__ == "__main__":
         with open(
             Path(__file__).parent.parent / "tests/test_data/16k_en_us_helloworld.pcm", "rb"
         ) as f:
-            sample_rate = client._params.input_sample_rate
-            if sample_rate is None:
-                sample_rate = 16000
+            sample_rate = 16000
             total_ms = 10000
             chunk_time_ms = 10
             chunk_size = int(chunk_time_ms * sample_rate / 1000 * 2)
@@ -264,7 +256,7 @@ if __name__ == "__main__":
         except KeyboardInterrupt:
             logger.info("Keyboard interrupt received.")
         finally:
-            logger.info("Main is shutting down the client...")
+            logger.info("Main is shutting down the clientpass")
             await client.stop()
 
     try:

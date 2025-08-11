@@ -129,7 +129,7 @@ class AWSASRExtension(AsyncASRBaseExtension):
         async def _handle_events():
             try:
                 if self.stream is None:
-                    raise Exception("stream is None")
+                    raise RuntimeError("stream is None")
                 async for event in self.stream.output_stream:
                     if isinstance(event, TranscriptEvent):
                         try:
@@ -156,7 +156,7 @@ class AWSASRExtension(AsyncASRBaseExtension):
     def is_connected(self) -> bool:
         return (
             self.stream is not None
-            and not self.stream.input_stream._input_stream.closed
+            and not self.stream.input_stream._input_stream.closed  # pylint: disable=protected-access
             and self.connected
         )
 
@@ -194,7 +194,8 @@ class AWSASRExtension(AsyncASRBaseExtension):
 
         finally:
             frame.unlock_buf(buf)
-            return True
+        
+        return True
 
     @override
     async def finalize(self, session_id: str | None) -> None:

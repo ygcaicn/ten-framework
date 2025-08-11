@@ -146,7 +146,7 @@ class TencentASRExtension(AsyncASRBaseExtension, AsyncTencentAsrListener):
             return False
         finally:
             frame.unlock_buf(buf)
-            return True
+        return True
 
     @override
     async def finalize(self, session_id: str | None) -> None:
