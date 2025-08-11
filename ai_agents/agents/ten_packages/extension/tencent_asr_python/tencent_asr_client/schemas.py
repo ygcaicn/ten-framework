@@ -12,8 +12,7 @@ ref: https://cloud.tencent.com/document/product/1093/48982
 
 from typing import Generic, TypeVar, Any
 from enum import IntEnum
-from pydantic import BaseModel, Field, ConfigDict, computed_field, field_validator
-from typing_extensions import Literal
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 import urllib.parse
 import random
 import time
@@ -205,7 +204,7 @@ class RequestParams(BaseModel):
         return query
 
     def query_params(self, app_id: str, secret_key: str) -> str:
-        endpoint = self.endpoint.lstrip("wss://").rstrip("/")
+        endpoint = str(self.endpoint).removeprefix("wss://").removesuffix("/")
         endpoint = f"{endpoint}/{app_id}"
         query_dict = self._query_params_without_signature()
         query_dict = dict(sorted(query_dict.items(), key=lambda d: d[0]))
@@ -223,7 +222,7 @@ class RequestParams(BaseModel):
         return urllib.parse.urlencode(query_dict)
 
     def uri(self, app_id:str, secret_key: str) -> str:
-        endpoint = self.endpoint.lstrip("wss://").rstrip("/")
+        endpoint = str(self.endpoint).removeprefix("wss://").removesuffix("/")
         full_url = f"wss://{endpoint}/{app_id}?{self.query_params(app_id, secret_key)}"
 
         logger = get_logger()
