@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field
 from pathlib import Path
 from .polly_tts import PollyTTSParams
 

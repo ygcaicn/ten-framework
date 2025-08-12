@@ -164,9 +164,9 @@ class PollyTTS:
             ClientError: when the AWS Polly API call fails
             asyncio.TimeoutError: when the operation times out
         """
-        if not text.strip():
-            logging.warning("empty text input")
-            return
+        # if not text.strip():
+        #     logging.warning("empty text input")
+        #     return
 
         try:
             # run the sync synthesize_speech method in the thread pool with timeout
@@ -270,13 +270,13 @@ if __name__ == "__main__":
 
         async def main():
             print("test basic async speech synthesis:")
-            async for chunk in polly.async_synthesize_speech("Hello world!"):
+            async for chunk in polly.async_synthesize_speech(" "):
                 print(f"received audio chunk: {len(chunk)} bytes")
             print("basic async speech synthesis done")
 
-            print("\ntest speech synthesis with retry mechanism:")
-            async for chunk in polly.async_synthesize_speech_with_retry("Hello world!"):
-                print(f"received audio chunk: {len(chunk)} bytes")
-            print("speech synthesis with retry mechanism done")
+            # print("\ntest speech synthesis with retry mechanism:")
+            # async for chunk in polly.async_synthesize_speech_with_retry("Hello world!"):
+            #     print(f"received audio chunk: {len(chunk)} bytes")
+            # print("speech synthesis with retry mechanism done")
 
         asyncio.run(main())
