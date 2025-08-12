@@ -61,9 +61,7 @@ from google.genai.types import (
 # ------------------------------
 @dataclass
 class GeminiRealtimeConfig(BaseConfig):
-    base_uri: str = ""          # kept for parity; google client uses api_key only
     api_key: str = ""
-    api_version: str = ""
     model: str = "gemini-2.0-flash-live-001"
     language: str = "en-US"
     prompt: str = ""

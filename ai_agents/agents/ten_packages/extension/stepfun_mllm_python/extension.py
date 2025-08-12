@@ -62,7 +62,7 @@ from .realtime.struct import (
 
 @dataclass
 class StepFunRealtimeConfig(BaseConfig):
-    base_uri: str = "wss://api.stepfun.com"
+    base_url: str = "wss://api.stepfun.com"
     api_key: str = ""
     path: str = "/v1/realtime"
     model: str = "step-1o-audio"
@@ -82,7 +82,6 @@ class StepFunRealtimeConfig(BaseConfig):
     vad_prefix_padding_ms: int = 300
     vad_silence_duration_ms: int = 500
 
-    vendor: str = ""
     dump: bool = False
     dump_path: str = ""
 

@@ -61,10 +61,10 @@ from .realtime.struct import (
 
 @dataclass
 class OpenAIRealtimeConfig(BaseConfig):
-    base_uri: str = "wss://api.openai.com"
+    base_url: str = "wss://api.openai.com"
     api_key: str = ""
     path: str = "/v1/realtime"
-    model: str = "gpt-4o-realtime-preview"
+    model: str = "gpt-4o"
     language: str = "en"
     prompt: str = ""
     temperature: float = 0.5

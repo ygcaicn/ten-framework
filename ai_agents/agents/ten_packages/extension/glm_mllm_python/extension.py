@@ -25,7 +25,6 @@ from ten_ai_base.struct import (
     MLLMServerSessionReady,
 )
 from ten_runtime import AudioFrame, AsyncTenEnv, Data
-from ten_runtime.audio_frame import AudioFrameDataFmt
 from ten_ai_base.config import BaseConfig
 from ten_ai_base.types import LLMToolMetadata, LLMChatCompletionContentPartParam
 
@@ -44,8 +43,6 @@ from .realtime.struct import (
     ResponseDone,
     ResponseAudioTranscriptDelta,
     ResponseAudioTranscriptDone,  # GLM seldom sends; we still handle
-    ResponseTextDelta,
-    ResponseTextDone,
     ResponseAudioDelta,
     ResponseAudioDone,
     ResponseOutputItemAdded,
@@ -59,7 +56,6 @@ from .realtime.struct import (
     # config/update
     SessionUpdate,
     SessionUpdateParams,
-    InputAudioTranscription,
     ContentType,
     ResponseCreate,
     AudioFormats,
@@ -77,7 +73,7 @@ class Role(str, Enum):
 
 @dataclass
 class GLMRealtimeConfig(BaseConfig):
-    base_uri: str = "wss://open.bigmodel.cn"
+    base_url: str = "wss://open.bigmodel.cn"
     api_key: str = ""
     path: str = "/api/paas/v4/realtime"
 
@@ -92,7 +88,6 @@ class GLMRealtimeConfig(BaseConfig):
     language: str = "en-US"
 
     # misc
-    vendor: str = ""   # parity w/ other providers
     dump: bool = False
     dump_path: str = ""
 
