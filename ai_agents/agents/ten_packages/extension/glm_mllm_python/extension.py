@@ -160,7 +160,7 @@ class GLMRealtime2Extension(AsyncMLLMBaseExtension):
         try:
             self.conn = RealtimeApiConnection(
                 ten_env=self.ten_env,
-                base_uri=self.config.base_uri,
+                base_url=self.config.base_url,
                 path=self.config.path,
                 api_key=self.config.api_key,
             )

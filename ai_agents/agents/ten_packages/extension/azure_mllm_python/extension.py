@@ -71,7 +71,7 @@ from .realtime.struct import (
 
 @dataclass
 class AzureRealtimeConfig(BaseConfig):
-    base_uri: str = ""
+    base_url: str = ""
     api_key: str = ""
     path: str = "/voice-live/realtime"
     model: str = (
@@ -143,9 +143,9 @@ class AzureRealtime2Extension(AsyncMLLMBaseExtension):
         self.config = await AzureRealtimeConfig.create_async(ten_env=ten_env)
         ten_env.log_info(f"config: {self.config}")
 
-        if not self.config.api_key or not self.config.base_uri:
-            ten_env.log_error("api_key and base_uri are required")
-            raise ValueError("api_key/base_uri required")
+        if not self.config.api_key or not self.config.base_url:
+            ten_env.log_error("api_key and base_url are required")
+            raise ValueError("api_key/base_url required")
 
     async def on_stop(self, ten_env: AsyncTenEnv) -> None:
         await super().on_stop(ten_env)
@@ -166,7 +166,7 @@ class AzureRealtime2Extension(AsyncMLLMBaseExtension):
         try:
             self.conn = RealtimeApiConnection(
                 ten_env=self.ten_env,
-                base_uri=self.config.base_uri,
+                base_url=self.config.base_url,
                 path=self.config.path,
                 api_key=self.config.api_key,
                 api_version=self.config.api_version,
