@@ -1,5 +1,7 @@
 import asyncio
+import json
 import time
+from typing import Literal
 
 from ten_runtime import (
     AsyncExtension,
@@ -127,7 +129,7 @@ class MainControlExtension(AsyncExtension):
 
                     case LLMResponseEvent():
                         # Handle LLM response events
-                        if not event.is_final:
+                        if not event.is_final and event.type == "message":
                             sentences, self.sentence_fragment = parse_sentences(
                                 self.sentence_fragment, event.delta
                             )
@@ -139,6 +141,7 @@ class MainControlExtension(AsyncExtension):
                         await self._send_transcript(
                             role="assistant",
                             text=event.text,
+                            data_type="reasoning" if event.type == "reasoning" else "text",
                             final=event.is_final,
                             stream_id=100,
                         )
@@ -153,24 +156,44 @@ class MainControlExtension(AsyncExtension):
                 )
 
     async def _send_transcript(
-        self, role: str, text: str, final: bool, stream_id: int
+        self, role: str, text: str, final: bool, stream_id: int, data_type:Literal["text"] | Literal["reasoning"] = "text",
     ):
         """
         Sends the transcript (ASR or LLM output) to the message collector.
         """
-        await _send_data(
-            self.ten_env,
-            "message",
-            "message_collector",
-            {
-                "data_type": "transcribe",
-                "role": role,
-                "text": text,
-                "text_ts": int(time.time() * 1000),
-                "is_final": final,
-                "stream_id": stream_id,
-            },
-        )
+        if data_type == "text":
+            await _send_data(
+                self.ten_env,
+                "message",
+                "message_collector",
+                {
+                    "data_type": "transcribe",
+                    "role": role,
+                    "text": text,
+                    "text_ts": int(time.time() * 1000),
+                    "is_final": final,
+                    "stream_id": stream_id,
+                },
+            )
+        elif data_type == "reasoning":
+            await _send_data(
+                self.ten_env,
+                "message",
+                "message_collector",
+                {
+                    "data_type": "raw",
+                    "role": role,
+                    "text": json.dumps({
+                        "type": "reasoning",
+                        "data": {
+                            "text": text,
+                        }
+                    }),
+                    "text_ts": int(time.time() * 1000),
+                    "is_final": final,
+                    "stream_id": stream_id,
+                },
+            )
         self.ten_env.log_info(
             f"[MainControlExtension] Sent transcript: {role}, final={final}, text={text}"
         )

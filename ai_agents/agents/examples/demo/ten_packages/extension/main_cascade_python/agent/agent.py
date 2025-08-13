@@ -15,6 +15,9 @@ class Agent:
         self.llm_exec.on_response = (
             self._on_llm_response
         )  # callback handled internally
+        self.llm_exec.on_reasoning_response = (
+            self._on_llm_reasoning_response
+        )  # callback handled internally
 
     async def on_cmd(self, cmd: Cmd):
         cmd_name = cmd.get_name()
@@ -104,6 +107,21 @@ class Agent:
         Internal callback for streaming LLM output, wrapped as an AgentEvent.
         """
         event = LLMResponseEvent(
+            type="message",
+            delta=delta,
+            text=text,
+            is_final=is_final,
+        )
+        await self.event_queue.put(event)
+
+    async def _on_llm_reasoning_response(
+        self, ten_env: AsyncTenEnv, delta: str, text: str, is_final: bool
+    ):
+        """
+        Internal callback for streaming LLM output, wrapped as an AgentEvent.
+        """
+        event = LLMResponseEvent(
+            type="reasoning",
             delta=delta,
             text=text,
             is_final=is_final,
