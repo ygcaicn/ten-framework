@@ -1,8 +1,17 @@
 import asyncio
 import time
 
-from ten_ai_base.mllm import DATA_MLLM_IN_CREATE_RESPONSE, DATA_MLLM_IN_SEND_MESSAGE_ITEM, DATA_MLLM_IN_SET_MESSAGE_CONTEXT
-from ten_ai_base.struct import MLLMClientCreateResponse, MLLMClientMessageItem, MLLMClientSendMessageItem, MLLMClientSetMessageContext
+from ten_ai_base.mllm import (
+    DATA_MLLM_IN_CREATE_RESPONSE,
+    DATA_MLLM_IN_SEND_MESSAGE_ITEM,
+    DATA_MLLM_IN_SET_MESSAGE_CONTEXT,
+)
+from ten_ai_base.struct import (
+    MLLMClientCreateResponse,
+    MLLMClientMessageItem,
+    MLLMClientSendMessageItem,
+    MLLMClientSetMessageContext,
+)
 from ten_runtime import (
     AsyncExtension,
     AsyncTenEnv,
@@ -25,7 +34,6 @@ from .helper import _send_cmd, _send_data
 from .config import MainControlConfig  # assume extracted from your base model
 
 
-
 class MainControlExtension(AsyncExtension):
     """
     The entry point of the agent module.
@@ -40,7 +48,7 @@ class MainControlExtension(AsyncExtension):
         self.session_ready: bool = False
         self.stopped: bool = False
         self._rtc_user_count: int = 0
-        self.current_metadata: dict = { "session_id": "0" }
+        self.current_metadata: dict = {"session_id": "0"}
 
     async def on_init(self, ten_env: AsyncTenEnv):
         self.ten_env = ten_env
@@ -59,7 +67,6 @@ class MainControlExtension(AsyncExtension):
         # Set initial context messages if needed
         # This can be customized based on your application's needs
         # For example, you might want to set a greeting message or initial context
-
 
         # await self._set_context_messages(
         #     messages=[
@@ -100,17 +107,22 @@ class MainControlExtension(AsyncExtension):
                     case ToolRegisterEvent():
                         await self.agent.register_tool(event.tool, event.source)
                     case FunctionCallEvent():
-                        await self.agent.call_tool(event.call_id, event.function_name, event.arguments)
+                        await self.agent.call_tool(
+                            event.call_id, event.function_name, event.arguments
+                        )
                     case InputTranscriptEvent():
                         self.current_metadata = {
-                            "session_id": event.metadata.get("session_id", "100"),
+                            "session_id": event.metadata.get(
+                                "session_id", "100"
+                            ),
                         }
                         stream_id = int(event.metadata.get("session_id", "100"))
 
                         if event.content == "":
-                            self.ten_env.log_info("[MainControlExtension] Empty ASR result, skipping")
+                            self.ten_env.log_info(
+                                "[MainControlExtension] Empty ASR result, skipping"
+                            )
                             continue
-
 
                         await self._send_transcript(
                             role="user",
@@ -132,29 +144,45 @@ class MainControlExtension(AsyncExtension):
                         await self._interrupt()
                     case SessionReadyEvent():
                         # Handle session ready events
-                        self.ten_env.log_info(f"[MainControlExtension] Session ready with metadata: {self.current_metadata}")
+                        self.ten_env.log_info(
+                            f"[MainControlExtension] Session ready with metadata: {self.current_metadata}"
+                        )
                         self.session_ready = True
                         await self._greeting_if_ready()
                     case _:
-                        self.ten_env.log_warn(f"[MainControlExtension] Unhandled event: {event}")
+                        self.ten_env.log_warn(
+                            f"[MainControlExtension] Unhandled event: {event}"
+                        )
 
             except Exception as e:
-                self.ten_env.log_error(f"[MainControlExtension] Event processing error: {e}")
+                self.ten_env.log_error(
+                    f"[MainControlExtension] Event processing error: {e}"
+                )
 
     async def _greeting_if_ready(self):
         """
         Sends a greeting message if the agent is ready and the user count is 1.
         This is typically called when the first user joins.
         """
-        if self._rtc_user_count == 1 and self.config.greeting and self.session_ready:
-            await self._send_message_item(MLLMClientMessageItem(
+        if (
+            self._rtc_user_count == 1
+            and self.config.greeting
+            and self.session_ready
+        ):
+            await self._send_message_item(
+                MLLMClientMessageItem(
                     role="user",
                     content=f"say {self.config.greeting} to me",
-            ))
+                )
+            )
             await self._send_create_response()
-            self.ten_env.log_info("[MainControlExtension] Sent greeting message")
+            self.ten_env.log_info(
+                "[MainControlExtension] Sent greeting message"
+            )
 
-    async def _send_transcript(self, role: str, text: str, final: bool, stream_id: int):
+    async def _send_transcript(
+        self, role: str, text: str, final: bool, stream_id: int
+    ):
         """
         Sends the transcript (ASR or LLM output) to the message collector.
         """
@@ -171,10 +199,13 @@ class MainControlExtension(AsyncExtension):
                 "stream_id": stream_id,
             },
         )
-        self.ten_env.log_info(f"[MainControlExtension] Sent transcript: {role}, final={final}, text={text}")
+        self.ten_env.log_info(
+            f"[MainControlExtension] Sent transcript: {role}, final={final}, text={text}"
+        )
 
-
-    async def _set_context_messages(self, messages: list[MLLMClientMessageItem]):
+    async def _set_context_messages(
+        self, messages: list[MLLMClientMessageItem]
+    ):
         """
         Set the context messages for the LLM.
         This method sends a command to set the provided messages.
@@ -185,7 +216,9 @@ class MainControlExtension(AsyncExtension):
             "v2v",
             MLLMClientSetMessageContext(messages=messages).model_dump(),
         )
-        self.ten_env.log_info(f"[MainControlExtension] Set context messages: {len(messages)} items")
+        self.ten_env.log_info(
+            f"[MainControlExtension] Set context messages: {len(messages)} items"
+        )
 
     async def _send_message_item(self, message: MLLMClientMessageItem):
         """
@@ -198,7 +231,9 @@ class MainControlExtension(AsyncExtension):
             "v2v",
             MLLMClientSendMessageItem(message=message).model_dump(),
         )
-        self.ten_env.log_info(f"[MainControlExtension] Sent message: {message.content} from {message.role}")
+        self.ten_env.log_info(
+            f"[MainControlExtension] Sent message: {message.content} from {message.role}"
+        )
 
     async def _send_create_response(self):
         """

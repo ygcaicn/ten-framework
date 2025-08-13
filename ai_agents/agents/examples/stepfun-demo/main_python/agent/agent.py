@@ -1,12 +1,30 @@
 import asyncio
 import json
 from ten_ai_base.const import CMD_PROPERTY_RESULT
-from ten_ai_base.mllm import DATA_MLLM_IN_FUNCTION_CALL_OUTPUT, DATA_MLLM_IN_REGISTER_TOOL, DATA_MLLM_IN_SEND_MESSAGE_ITEM, DATA_MLLM_OUT_FUNCTION_CALL, DATA_MLLM_OUT_INTERRUPTED, DATA_MLLM_OUT_REQUEST_TRANSCRIPT, DATA_MLLM_OUT_RESPONSE_TRANSCRIPT, DATA_MLLM_OUT_SESSION_READY
-from ten_ai_base.struct import MLLMClientFunctionCallOutput, MLLMClientRegisterTool, MLLMServerFunctionCall, MLLMServerInputTranscript, MLLMServerInterrupt, MLLMServerOutputTranscript, MLLMServerSessionReady
+from ten_ai_base.mllm import (
+    DATA_MLLM_IN_FUNCTION_CALL_OUTPUT,
+    DATA_MLLM_IN_REGISTER_TOOL,
+    DATA_MLLM_IN_SEND_MESSAGE_ITEM,
+    DATA_MLLM_OUT_FUNCTION_CALL,
+    DATA_MLLM_OUT_INTERRUPTED,
+    DATA_MLLM_OUT_REQUEST_TRANSCRIPT,
+    DATA_MLLM_OUT_RESPONSE_TRANSCRIPT,
+    DATA_MLLM_OUT_SESSION_READY,
+)
+from ten_ai_base.struct import (
+    MLLMClientFunctionCallOutput,
+    MLLMClientRegisterTool,
+    MLLMServerFunctionCall,
+    MLLMServerInputTranscript,
+    MLLMServerInterrupt,
+    MLLMServerOutputTranscript,
+    MLLMServerSessionReady,
+)
 from ..helper import _send_cmd, _send_data
 from ten_runtime import AsyncTenEnv, Cmd, CmdResult, Data, StatusCode
 from ten_ai_base.types import LLMToolMetadata, LLMToolResult
 from .events import *
+
 
 class Agent:
     def __init__(self, ten_env: AsyncTenEnv):
@@ -27,17 +45,23 @@ class Agent:
                 if err:
                     raise RuntimeError(f"Invalid tool metadata: {err}")
                 tool = LLMToolMetadata.model_validate_json(tool_json)
-                event = ToolRegisterEvent(tool=tool, source=cmd.get_source().extension_name)
+                event = ToolRegisterEvent(
+                    tool=tool, source=cmd.get_source().extension_name
+                )
             else:
                 self.ten_env.log_warn(f"Unhandled cmd: {cmd_name}")
                 return
 
             await self.event_queue.put(event)
-            await self.ten_env.return_result(CmdResult.create(StatusCode.OK, cmd))
+            await self.ten_env.return_result(
+                CmdResult.create(StatusCode.OK, cmd)
+            )
 
         except Exception as e:
             self.ten_env.log_error(f"on_cmd error: {e}")
-            await self.ten_env.return_result(CmdResult.create(StatusCode.ERROR, cmd))
+            await self.ten_env.return_result(
+                CmdResult.create(StatusCode.ERROR, cmd)
+            )
 
     async def on_data(self, data: Data):
         data_name = data.get_name()
@@ -45,7 +69,9 @@ class Agent:
         try:
             if data_name == DATA_MLLM_OUT_REQUEST_TRANSCRIPT:
                 transcript_json, _ = data.get_property_to_json(None)
-                transcript = MLLMServerInputTranscript.model_validate_json(transcript_json)
+                transcript = MLLMServerInputTranscript.model_validate_json(
+                    transcript_json
+                )
                 event = InputTranscriptEvent(
                     delta=transcript.delta,
                     content=transcript.content,
@@ -55,7 +81,9 @@ class Agent:
                 await self.event_queue.put(event)
             elif data_name == DATA_MLLM_OUT_RESPONSE_TRANSCRIPT:
                 response_json, _ = data.get_property_to_json(None)
-                response = MLLMServerOutputTranscript.model_validate_json(response_json)
+                response = MLLMServerOutputTranscript.model_validate_json(
+                    response_json
+                )
                 event = OutputTranscriptEvent(
                     delta=response.delta or "",
                     content=response.content,
@@ -65,17 +93,23 @@ class Agent:
                 await self.event_queue.put(event)
             elif data_name == DATA_MLLM_OUT_SESSION_READY:
                 session_json, _ = data.get_property_to_json(None)
-                session = MLLMServerSessionReady.model_validate_json(session_json)
+                session = MLLMServerSessionReady.model_validate_json(
+                    session_json
+                )
                 event = SessionReadyEvent(metadata=session.metadata)
                 await self.event_queue.put(event)
             elif data_name == DATA_MLLM_OUT_INTERRUPTED:
                 interrupt_json, _ = data.get_property_to_json(None)
-                interrupt = MLLMServerInterrupt.model_validate_json(interrupt_json)
+                interrupt = MLLMServerInterrupt.model_validate_json(
+                    interrupt_json
+                )
                 event = ServerInterruptEvent(metadata=interrupt.metadata)
                 await self.event_queue.put(event)
             elif data_name == DATA_MLLM_OUT_FUNCTION_CALL:
                 function_call_json, _ = data.get_property_to_json(None)
-                function_call = MLLMServerFunctionCall.model_validate_json(function_call_json)
+                function_call = MLLMServerFunctionCall.model_validate_json(
+                    function_call_json
+                )
                 event = FunctionCallEvent(
                     call_id=function_call.call_id,
                     function_name=function_call.name,
@@ -106,29 +140,31 @@ class Agent:
             "v2v",
             payload,
         )
-        self.ten_env.log_info(f"[MainControlExtension] Registered tools: {tool.name} from {source}")
+        self.ten_env.log_info(
+            f"[MainControlExtension] Registered tools: {tool.name} from {source}"
+        )
 
     async def call_tool(self, tool_call_id: str, name: str, arguments: str):
         """
         Handle a tool call event.
         This method is typically called when the MLLM server makes a function call.
         """
-        self.ten_env.log_info(f"Handling tool call: {tool_call_id}, {name}, {arguments}")
+        self.ten_env.log_info(
+            f"Handling tool call: {tool_call_id}, {name}, {arguments}"
+        )
         src_extension_name = self.tool_registry.get(name)
-        result, _ = await _send_cmd(self.ten_env, "tool_call", src_extension_name, {
-            "name": name,
-            "arguments": json.loads(arguments)
-        })
+        result, _ = await _send_cmd(
+            self.ten_env,
+            "tool_call",
+            src_extension_name,
+            {"name": name, "arguments": json.loads(arguments)},
+        )
 
         if result.get_status_code() == StatusCode.OK:
-            r, _ = result.get_property_to_json(
-                CMD_PROPERTY_RESULT
-            )
+            r, _ = result.get_property_to_json(CMD_PROPERTY_RESULT)
             tool_result: LLMToolResult = json.loads(r)
 
-            self.ten_env.log_info(
-                f"tool_result: {tool_result}"
-            )
+            self.ten_env.log_info(f"tool_result: {tool_result}")
 
             if tool_result["type"] == "llmresult":
                 result_content = tool_result["content"]

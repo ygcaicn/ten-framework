@@ -78,7 +78,7 @@ class PollyTTSExtension(AsyncTTS2BaseExtension):
             self.client.close()
         if isinstance(self.audio_dumper, Dumper):
             dumper: Dumper = self.audio_dumper
-            await dumper.stop() # pylint: disable=no-member
+            await dumper.stop()  # pylint: disable=no-member
         elif isinstance(self.audio_dumper, dict):
             for dumper in self.audio_dumper.values():
                 await dumper.stop()
