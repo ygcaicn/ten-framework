@@ -49,9 +49,9 @@ class OpenAILLM2Config(BaseModel):
     max_tokens: int = 4096
     seed: int = random.randint(0, 1000000)
     prompt: str = "You are a helpful assistant."
-    black_list_params: List[str] = field(default_factory=lambda: [
-        "messages", "tools", "stream", "n", "model"
-    ])
+    black_list_params: List[str] = field(
+        default_factory=lambda: ["messages", "tools", "stream", "n", "model"]
+    )
 
     def is_black_list_params(self, key: str) -> bool:
         return key in self.black_list_params
@@ -119,7 +119,6 @@ class OpenAIChatGPT:
             self.session.proxies.update(proxies)
         self.client.session = self.session
 
-
     def _convert_tools_to_dict(self, tool: LLMToolMetadata):
         json_dict = {
             "type": "function",
@@ -178,40 +177,47 @@ class OpenAIChatGPT:
                         for item in content:
                             match item:
                                 case TextContent():
-                                    content_items.append({
-                                        "type": "text",
-                                        "text": item.text
-                                    })
+                                    content_items.append(
+                                        {"type": "text", "text": item.text}
+                                    )
                                 case ImageContent():
-                                    content_items.append({
-                                        "type": "image",
-                                        "image_url": {
-                                            "url": item.image_url
+                                    content_items.append(
+                                        {
+                                            "type": "image",
+                                            "image_url": {
+                                                "url": item.image_url
+                                            },
                                         }
-                                    })
+                                    )
                         parsed_messages.append(
                             {"role": role, "content": content_items}
                         )
                 case LLMMessageFunctionCall():
                     # Handle function call messages
-                    parsed_messages.append({
-                        "role": "assistant",
-                        "tool_calls": [{
-                            "id": message.call_id,
-                            "type": "function",
-                            "function": {
-                                "name": message.name,
-                                "arguments": message.arguments,
-                            }
-                        }]
-                    })
+                    parsed_messages.append(
+                        {
+                            "role": "assistant",
+                            "tool_calls": [
+                                {
+                                    "id": message.call_id,
+                                    "type": "function",
+                                    "function": {
+                                        "name": message.name,
+                                        "arguments": message.arguments,
+                                    },
+                                }
+                            ],
+                        }
+                    )
                 case LLMMessageFunctionCallOutput():
                     # Handle function call output messages
-                    parsed_messages.append({
-                        "role": "tool",
-                        "tool_call_id": message.call_id,
-                        "content": message.output,
-                    })
+                    parsed_messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": message.call_id,
+                            "content": message.output,
+                        }
+                    )
 
         for tool in input.tools or []:
             if tools is None:
@@ -223,7 +229,8 @@ class OpenAIChatGPT:
             "messages": [
                 {
                     "role": "system",
-                    "content": self.config.prompt or "you are a helpful assistant",
+                    "content": self.config.prompt
+                    or "you are a helpful assistant",
                 },
                 *parsed_messages,
             ],
@@ -242,9 +249,7 @@ class OpenAIChatGPT:
         for key, value in (input.parameters or {}).items():
             # Check if it's a valid option and not in black list
             if not self.config.is_black_list_params(key):
-                self.ten_env.log_debug(
-                    f"set openai param: {key} = {value}"
-                )
+                self.ten_env.log_debug(f"set openai param: {key} = {value}")
                 req[key] = value
 
         self.ten_env.log_info(f"Requesting chat completions with: {req}")
@@ -275,9 +280,7 @@ class OpenAIChatGPT:
                 choice = chat_completion.choices[0]
                 delta = choice.delta
 
-                self.ten_env.log_info(
-                    f"Processing choice: {choice}"
-                )
+                self.ten_env.log_info(f"Processing choice: {choice}")
 
                 content = delta.content if delta and delta.content else ""
                 reasoning_content = (
@@ -292,19 +295,23 @@ class OpenAIChatGPT:
                     reasoning_mode = ReasoningMode.ModeV1
 
                 # Emit content update event (fire-and-forget)
-                if (content or reasoning_mode == ReasoningMode.ModeV1):
+                if content or reasoning_mode == ReasoningMode.ModeV1:
                     prev_state = parser.state
 
                     if reasoning_mode == ReasoningMode.ModeV1:
                         self.ten_env.log_info("process_by_reasoning_content")
-                        think_state_changed = parser.process_by_reasoning_content(
-                            reasoning_content
+                        think_state_changed = (
+                            parser.process_by_reasoning_content(
+                                reasoning_content
+                            )
                         )
                     else:
                         think_state_changed = parser.process(content)
 
                     if not think_state_changed:
-                        self.ten_env.log_info(f"state: {parser.state}, content: {content}, think: {parser.think_content}")
+                        self.ten_env.log_info(
+                            f"state: {parser.state}, content: {content}, think: {parser.think_content}"
+                        )
                         if parser.state == "THINK":
                             yield LLMResponseReasoningDelta(
                                 response_id=chat_completion.id,

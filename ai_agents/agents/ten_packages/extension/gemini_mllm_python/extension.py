@@ -56,6 +56,7 @@ from google.genai.types import (
     MediaResolution,
 )
 
+
 # ------------------------------
 # Config
 # ------------------------------
@@ -127,7 +128,9 @@ class GeminiRealtime2Extension(AsyncMLLMBaseExtension):
         self.response_transcript = ""
 
         # cached session config
-        self._cached_session_config: LiveConnectConfig | LiveConnectConfigDict | None = None
+        self._cached_session_config: (
+            LiveConnectConfig | LiveConnectConfigDict | None
+        ) = None
         self.available_tools: list[LLMToolMetadata] = []
 
     # ---------- Lifecycle ----------
@@ -158,7 +161,9 @@ class GeminiRealtime2Extension(AsyncMLLMBaseExtension):
                     try:
                         await self._handle_server_message(resp)
                     except Exception as e:
-                        self.ten_env.log_error(f"[Gemini] error in message handler: {e}")
+                        self.ten_env.log_error(
+                            f"[Gemini] error in message handler: {e}"
+                        )
             except Exception as e:
                 self.ten_env.log_error(f"[Gemini] receive loop error: {e}")
                 break
@@ -167,8 +172,12 @@ class GeminiRealtime2Extension(AsyncMLLMBaseExtension):
         await asyncio.sleep(1)
         try:
             cfg = self._build_session_config()
-            self.ten_env.log_info(f"[Gemini] connecting model={self.config.model}")
-            async with self.client.aio.live.connect(model=self.config.model, config=cfg) as sess:
+            self.ten_env.log_info(
+                f"[Gemini] connecting model={self.config.model}"
+            )
+            async with self.client.aio.live.connect(
+                model=self.config.model, config=cfg
+            ) as sess:
                 self.session = sess
                 self.connected = True
                 self.session_id = getattr(self.session, "id", None)
@@ -208,7 +217,9 @@ class GeminiRealtime2Extension(AsyncMLLMBaseExtension):
 
     # ---------- Provider ingress (Client → Gemini) ----------
 
-    async def send_audio(self, frame: AudioFrame, session_id: str | None) -> bool:
+    async def send_audio(
+        self, frame: AudioFrame, session_id: str | None
+    ) -> bool:
         """Push raw PCM to Gemini live session."""
         if not self.connected or not self.session:
             return False
@@ -224,7 +235,9 @@ class GeminiRealtime2Extension(AsyncMLLMBaseExtension):
         await self.session.send_realtime_input(audio=blob)
         return True
 
-    async def send_client_message_item(self, item: MLLMClientMessageItem, session_id: str | None = None) -> None:
+    async def send_client_message_item(
+        self, item: MLLMClientMessageItem, session_id: str | None = None
+    ) -> None:
         """Send text message as a content turn."""
         if not self.connected or not self.session:
             return
@@ -235,9 +248,13 @@ class GeminiRealtime2Extension(AsyncMLLMBaseExtension):
                 turns=Content(role=role, parts=[Part(text=text)])
             )
         except Exception as e:
-            self.ten_env.log_error(f"[Gemini] send_client_message_item failed: {e}")
+            self.ten_env.log_error(
+                f"[Gemini] send_client_message_item failed: {e}"
+            )
 
-    async def send_client_create_response(self, session_id: str | None = None) -> None:
+    async def send_client_create_response(
+        self, session_id: str | None = None
+    ) -> None:
         """Trigger model response. Gemini responds automatically on input; keep for API parity."""
         pass
         # No explicit trigger needed; send a small control ping to nudge if desired.
@@ -248,7 +265,9 @@ class GeminiRealtime2Extension(AsyncMLLMBaseExtension):
         self.available_tools.append(tool)
         # Gemini tools are baked in connect config; to apply immediately we'd need a session restart.
 
-    async def send_client_function_call_output(self, function_call_output: MLLMClientFunctionCallOutput) -> None:
+    async def send_client_function_call_output(
+        self, function_call_output: MLLMClientFunctionCallOutput
+    ) -> None:
         """Return tool result back to model (via LiveClientToolResponse)."""
         if not self.connected or not self.session:
             return
@@ -257,11 +276,17 @@ class GeminiRealtime2Extension(AsyncMLLMBaseExtension):
                 id=function_call_output.call_id,
                 response={"output": function_call_output.output},
             )
-            await self.session.send(input=LiveClientToolResponse(function_responses=[func_resp]))
+            await self.session.send(
+                input=LiveClientToolResponse(function_responses=[func_resp])
+            )
         except Exception as e:
-            self.ten_env.log_error(f"[Gemini] send_client_function_call_output failed: {e}")
+            self.ten_env.log_error(
+                f"[Gemini] send_client_function_call_output failed: {e}"
+            )
 
-    async def _resume_context(self, messages: list[MLLMClientMessageItem]) -> None:
+    async def _resume_context(
+        self, messages: list[MLLMClientMessageItem]
+    ) -> None:
         """Replay preserved messages into current session."""
         if not self.connected or not self.session:
             return
@@ -297,7 +322,9 @@ class GeminiRealtime2Extension(AsyncMLLMBaseExtension):
             if sc.model_turn and sc.model_turn.parts:
                 for p in sc.model_turn.parts:
                     if p.inline_data and p.inline_data.data:
-                        await self.send_server_output_audio_data(p.inline_data.data)
+                        await self.send_server_output_audio_data(
+                            p.inline_data.data
+                        )
 
             # Input transcript (user)
             if sc.input_transcription:
@@ -330,7 +357,11 @@ class GeminiRealtime2Extension(AsyncMLLMBaseExtension):
                     await self.send_server_output_text(
                         MLLMServerOutputTranscript(
                             content=self.response_transcript,
-                            delta=sc.output_transcription.text if not sc.turn_complete else "",
+                            delta=(
+                                sc.output_transcription.text
+                                if not sc.turn_complete
+                                else ""
+                            ),
                             final=bool(sc.output_transcription.finished),
                             metadata={"session_id": self.session_id or "-1"},
                         )
@@ -357,7 +388,9 @@ class GeminiRealtime2Extension(AsyncMLLMBaseExtension):
             tool_call_id = call.id
             name = call.name
             arguments = call.args
-            self.ten_env.log_info(f"[Gemini] tool_call {tool_call_id} {name} {arguments}")
+            self.ten_env.log_info(
+                f"[Gemini] tool_call {tool_call_id} {name} {arguments}"
+            )
 
             # Forward to server to actually execute user tool
             await self.send_server_function_call(
@@ -379,7 +412,9 @@ class GeminiRealtime2Extension(AsyncMLLMBaseExtension):
             required: list[str] = []
             props: dict[str, Schema] = {}
             for p in t.parameters:
-                props[p.name] = Schema(type=p.type.upper(), description=p.description)
+                props[p.name] = Schema(
+                    type=p.type.upper(), description=p.description
+                )
                 if p.required:
                     required.append(p.name)
             return Tool(
@@ -387,12 +422,18 @@ class GeminiRealtime2Extension(AsyncMLLMBaseExtension):
                     FunctionDeclaration(
                         name=t.name,
                         description=t.description,
-                        parameters=Schema(type="OBJECT", properties=props, required=required),
+                        parameters=Schema(
+                            type="OBJECT", properties=props, required=required
+                        ),
                     )
                 ]
             )
 
-        tools = [tool_decl(t) for t in self.available_tools] if self.available_tools else []
+        tools = (
+            [tool_decl(t) for t in self.available_tools]
+            if self.available_tools
+            else []
+        )
 
         # VAD mapping
         start_sens = {
@@ -417,13 +458,19 @@ class GeminiRealtime2Extension(AsyncMLLMBaseExtension):
         )
 
         cfg = LiveConnectConfig(
-            response_modalities=[Modality.AUDIO] if self.config.audio_out else [Modality.TEXT],
+            response_modalities=(
+                [Modality.AUDIO] if self.config.audio_out else [Modality.TEXT]
+            ),
             media_resolution=self.config.media_resolution,
-            system_instruction=Content(parts=[Part(text=self.config.prompt or "")]),
+            system_instruction=Content(
+                parts=[Part(text=self.config.prompt or "")]
+            ),
             tools=tools,
             speech_config=SpeechConfig(
                 voice_config=VoiceConfig(
-                    prebuilt_voice_config=PrebuiltVoiceConfig(voice_name=self.config.voice)
+                    prebuilt_voice_config=PrebuiltVoiceConfig(
+                        voice_name=self.config.voice
+                    )
                 ),
                 language_code=self.config.language,
             ),
@@ -432,10 +479,24 @@ class GeminiRealtime2Extension(AsyncMLLMBaseExtension):
                 max_output_tokens=self.config.max_tokens,
             ),
             realtime_input_config=realtime_cfg,
-            output_audio_transcription=AudioTranscriptionConfig() if self.config.transcribe_agent else None,
-            input_audio_transcription=AudioTranscriptionConfig() if self.config.transcribe_user else None,
-            enable_affective_dialog=True if self.config.affective_dialog else None,
-            proactivity=ProactivityConfig(proactive_audio=True) if self.config.proactive_audio else None,
+            output_audio_transcription=(
+                AudioTranscriptionConfig()
+                if self.config.transcribe_agent
+                else None
+            ),
+            input_audio_transcription=(
+                AudioTranscriptionConfig()
+                if self.config.transcribe_user
+                else None
+            ),
+            enable_affective_dialog=(
+                True if self.config.affective_dialog else None
+            ),
+            proactivity=(
+                ProactivityConfig(proactive_audio=True)
+                if self.config.proactive_audio
+                else None
+            ),
         )
 
         self._cached_session_config = cfg

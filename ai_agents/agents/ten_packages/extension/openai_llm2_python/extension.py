@@ -15,7 +15,6 @@ from ten_runtime.async_ten_env import AsyncTenEnv
 from .openai import OpenAIChatGPT, OpenAILLM2Config
 
 
-
 class OpenAILLM2Extension(AsyncLLM2BaseExtension):
     def __init__(self, name: str):
         super().__init__(name)

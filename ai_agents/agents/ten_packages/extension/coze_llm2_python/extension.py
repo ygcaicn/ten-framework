@@ -1,4 +1,3 @@
-
 # ------------------------------
 # Extension (LLM2)
 # ------------------------------
@@ -37,7 +36,9 @@ class CozeLLM2Extension(AsyncLLM2BaseExtension):
                 f"initialized Coze client: base_url={self.config.base_url}, bot_id={self.config.bot_id}"
             )
         except Exception as err:
-            async_ten_env.log_info(f"Failed to initialize CozeChatClient: {err}")
+            async_ten_env.log_info(
+                f"Failed to initialize CozeChatClient: {err}"
+            )
 
     async def on_stop(self, async_ten_env: AsyncTenEnv) -> None:
         async_ten_env.log_info("on_stop")

@@ -12,7 +12,15 @@ import time
 from typing import Literal
 
 from ten_ai_base.mllm import AsyncMLLMBaseExtension
-from ten_ai_base.struct import MLLMClientFunctionCallOutput, MLLMClientMessageItem, MLLMServerFunctionCall, MLLMServerInputTranscript, MLLMServerInterrupt, MLLMServerOutputTranscript, MLLMServerSessionReady
+from ten_ai_base.struct import (
+    MLLMClientFunctionCallOutput,
+    MLLMClientMessageItem,
+    MLLMServerFunctionCall,
+    MLLMServerInputTranscript,
+    MLLMServerInterrupt,
+    MLLMServerOutputTranscript,
+    MLLMServerSessionReady,
+)
 from ten_runtime import (
     AudioFrame,
     AsyncTenEnv,
@@ -134,7 +142,6 @@ class OpenAIRealtime2Extension(AsyncMLLMBaseExtension):
                 vendor=self.config.vendor,
             )
 
-
             await self.conn.connect()
             item_id = ""  # For truncate
             response_id = ""
@@ -162,32 +169,46 @@ class OpenAIRealtime2Extension(AsyncMLLMBaseExtension):
                             self.ten_env.log_info(
                                 f"Session is updated: {message.session}"
                             )
-                            await self.send_server_session_ready(MLLMServerSessionReady())
+                            await self.send_server_session_ready(
+                                MLLMServerSessionReady()
+                            )
                         case ItemInputAudioTranscriptionDelta():
                             self.ten_env.log_debug(
                                 f"On request transcript delta {message.item_id} {message.content_index}"
                             )
                             self.request_transcript += message.delta
-                            await self.send_server_input_transcript(MLLMServerInputTranscript(
-                                content=self.request_transcript,
-                                delta=message.delta,
-                                final=False,
-                                metadata={
-                                    "session_id": self.session_id if self.session_id else "-1",
-                                }
-                            ))
+                            await self.send_server_input_transcript(
+                                MLLMServerInputTranscript(
+                                    content=self.request_transcript,
+                                    delta=message.delta,
+                                    final=False,
+                                    metadata={
+                                        "session_id": (
+                                            self.session_id
+                                            if self.session_id
+                                            else "-1"
+                                        ),
+                                    },
+                                )
+                            )
                         case ItemInputAudioTranscriptionCompleted():
                             self.ten_env.log_debug(
                                 f"On request transcript {message.transcript}"
                             )
-                            await self.send_server_input_transcript(MLLMServerInputTranscript(
-                                content=self.request_transcript,
-                                delta=message.transcript,
-                                final=True,
-                                metadata={
-                                    "session_id": self.session_id if self.session_id else "-1",
-                                }
-                            ))
+                            await self.send_server_input_transcript(
+                                MLLMServerInputTranscript(
+                                    content=self.request_transcript,
+                                    delta=message.transcript,
+                                    final=True,
+                                    metadata={
+                                        "session_id": (
+                                            self.session_id
+                                            if self.session_id
+                                            else "-1"
+                                        ),
+                                    },
+                                )
+                            )
                             self.request_transcript = ""
                         case ItemInputAudioTranscriptionFailed():
                             self.ten_env.log_warn(
@@ -225,14 +246,20 @@ class OpenAIRealtime2Extension(AsyncMLLMBaseExtension):
                                 continue
 
                             self.response_transcript += message.delta
-                            await self.send_server_output_text(MLLMServerOutputTranscript(
-                                content=self.response_transcript,
-                                delta=message.delta,
-                                final=False,
-                                metadata={
-                                    "session_id": self.session_id if self.session_id else "-1",
-                                }
-                            ))
+                            await self.send_server_output_text(
+                                MLLMServerOutputTranscript(
+                                    content=self.response_transcript,
+                                    delta=message.delta,
+                                    final=False,
+                                    metadata={
+                                        "session_id": (
+                                            self.session_id
+                                            if self.session_id
+                                            else "-1"
+                                        ),
+                                    },
+                                )
+                            )
                         case ResponseTextDelta():
                             self.ten_env.log_debug(
                                 f"On response text delta {message.response_id} {message.output_index} {message.content_index} {message.delta}"
@@ -246,14 +273,20 @@ class OpenAIRealtime2Extension(AsyncMLLMBaseExtension):
                                 item_id = message.item_id
 
                             self.response_transcript += message.delta
-                            await self.send_server_output_text(MLLMServerOutputTranscript(
-                                content=self.response_transcript,
-                                delta=message.delta,
-                                final=False,
-                                metadata={
-                                    "session_id": self.session_id if self.session_id else "-1",
-                                }
-                            ))
+                            await self.send_server_output_text(
+                                MLLMServerOutputTranscript(
+                                    content=self.response_transcript,
+                                    delta=message.delta,
+                                    final=False,
+                                    metadata={
+                                        "session_id": (
+                                            self.session_id
+                                            if self.session_id
+                                            else "-1"
+                                        ),
+                                    },
+                                )
+                            )
                         case ResponseAudioTranscriptDone():
                             self.ten_env.log_debug(
                                 f"On response transcript done {message.output_index} {message.content_index} {message.transcript}"
@@ -263,14 +296,20 @@ class OpenAIRealtime2Extension(AsyncMLLMBaseExtension):
                                     f"On flushed transcript done {message.response_id}"
                                 )
                                 continue
-                            await self.send_server_output_text(MLLMServerOutputTranscript(
-                                content=self.response_transcript,
-                                delta="",
-                                final=True,
-                                metadata={
-                                    "session_id": self.session_id if self.session_id else "-1",
-                                }
-                            ))
+                            await self.send_server_output_text(
+                                MLLMServerOutputTranscript(
+                                    content=self.response_transcript,
+                                    delta="",
+                                    final=True,
+                                    metadata={
+                                        "session_id": (
+                                            self.session_id
+                                            if self.session_id
+                                            else "-1"
+                                        ),
+                                    },
+                                )
+                            )
                             self.response_transcript = ""
                         case ResponseTextDone():
                             self.ten_env.log_debug(
@@ -281,14 +320,20 @@ class OpenAIRealtime2Extension(AsyncMLLMBaseExtension):
                                     f"On flushed text done {message.response_id}"
                                 )
                                 continue
-                            await self.send_server_output_text(MLLMServerOutputTranscript(
-                                content=self.response_transcript,
-                                delta="",
-                                final=True,
-                                metadata={
-                                    "session_id": self.session_id if self.session_id else "-1",
-                                }
-                            ))
+                            await self.send_server_output_text(
+                                MLLMServerOutputTranscript(
+                                    content=self.response_transcript,
+                                    delta="",
+                                    final=True,
+                                    metadata={
+                                        "session_id": (
+                                            self.session_id
+                                            if self.session_id
+                                            else "-1"
+                                        ),
+                                    },
+                                )
+                            )
                             self.response_transcript = ""
                         case ResponseOutputItemDone():
                             self.ten_env.log_debug(
@@ -331,17 +376,27 @@ class OpenAIRealtime2Extension(AsyncMLLMBaseExtension):
                             #     )
                             #     await self.conn.send_request(truncate)
                             if self.config.server_vad:
-                                await self.send_server_interrupted(sos=MLLMServerInterrupt())
+                                await self.send_server_interrupted(
+                                    sos=MLLMServerInterrupt()
+                                )
                             if response_id and self.response_transcript:
-                                transcript = self.response_transcript + "[interrupted]"
-                                await self.send_server_output_text(MLLMServerOutputTranscript(
-                                    content=transcript,
-                                    delta=None,
-                                    final=True,
-                                    metadata={
-                                        "session_id": self.session_id if self.session_id else "-1",
-                                    }
-                                ))
+                                transcript = (
+                                    self.response_transcript + "[interrupted]"
+                                )
+                                await self.send_server_output_text(
+                                    MLLMServerOutputTranscript(
+                                        content=transcript,
+                                        delta=None,
+                                        final=True,
+                                        metadata={
+                                            "session_id": (
+                                                self.session_id
+                                                if self.session_id
+                                                else "-1"
+                                            ),
+                                        },
+                                    )
+                                )
                                 self.response_transcript = ""
                                 # memory leak, change to lru later
                                 flushed.add(response_id)
@@ -401,7 +456,9 @@ class OpenAIRealtime2Extension(AsyncMLLMBaseExtension):
     def is_connected(self) -> bool:
         return self.connected
 
-    async def send_audio(self, frame: AudioFrame, session_id: str | None) -> bool:
+    async def send_audio(
+        self, frame: AudioFrame, session_id: str | None
+    ) -> bool:
         self.session_id = session_id
         await self.conn.send_audio_data(frame.get_buf())
         return True
@@ -409,7 +466,9 @@ class OpenAIRealtime2Extension(AsyncMLLMBaseExtension):
     async def on_data(self, ten_env: AsyncTenEnv, data: Data) -> None:
         await super().on_data(ten_env, data)
 
-    async def send_client_message_item(self, item: MLLMClientMessageItem, session_id: str | None = None) -> None:
+    async def send_client_message_item(
+        self, item: MLLMClientMessageItem, session_id: str | None = None
+    ) -> None:
         """
         Send a message item to the MLLM service.
         This method is used to send text messages to the LLM.
@@ -419,7 +478,12 @@ class OpenAIRealtime2Extension(AsyncMLLMBaseExtension):
                 await self.conn.send_request(
                     ItemCreate(
                         item=UserMessageItemParam(
-                            content=[{"type": ContentType.InputText, "text": item.content}]
+                            content=[
+                                {
+                                    "type": ContentType.InputText,
+                                    "text": item.content,
+                                }
+                            ]
                         )
                     )
                 )
@@ -427,7 +491,9 @@ class OpenAIRealtime2Extension(AsyncMLLMBaseExtension):
                 await self.conn.send_request(
                     ItemCreate(
                         item=AssistantMessageItemParam(
-                            content=[{"type": ContentType.Text, "text": item.content}]
+                            content=[
+                                {"type": ContentType.Text, "text": item.content}
+                            ]
                         )
                     )
                 )
@@ -435,7 +501,9 @@ class OpenAIRealtime2Extension(AsyncMLLMBaseExtension):
                 self.ten_env.log_error(f"Unknown role: {item.role}")
                 return
 
-    async def send_client_create_response(self, session_id: str | None = None) -> None:
+    async def send_client_create_response(
+        self, session_id: str | None = None
+    ) -> None:
         """
         Send a create response to the MLLM service.
         This method is used to trigger MLLM to generate a response.
@@ -450,12 +518,16 @@ class OpenAIRealtime2Extension(AsyncMLLMBaseExtension):
         self.available_tools.append(tool)
         await self._update_session()
 
-    async def send_client_function_call_output(self, function_call_output: MLLMClientFunctionCallOutput) -> None:
+    async def send_client_function_call_output(
+        self, function_call_output: MLLMClientFunctionCallOutput
+    ) -> None:
         """
         Send a function call output to the MLLM service.
         This method is used to send the result of a function call made by the LLM.
         """
-        self.ten_env.log_info(f"Sending function call output: {function_call_output.output}")
+        self.ten_env.log_info(
+            f"Sending function call output: {function_call_output.output}"
+        )
         await self.conn.send_request(
             ItemCreate(
                 item=FunctionCallOutputItemParam(
@@ -465,7 +537,9 @@ class OpenAIRealtime2Extension(AsyncMLLMBaseExtension):
             )
         )
 
-    async def _resume_context(self, messages: list[MLLMClientMessageItem]) -> None:
+    async def _resume_context(
+        self, messages: list[MLLMClientMessageItem]
+    ) -> None:
         """
         Resume the context with the provided messages.
         This method is used to set the context messages for the LLM.
@@ -473,7 +547,6 @@ class OpenAIRealtime2Extension(AsyncMLLMBaseExtension):
         for message in messages:
             self.ten_env.log_info(f"Resuming context with messages: {message}")
             await self.send_client_message_item(message)
-
 
     async def _update_session(self) -> None:
         if not self.connected:
@@ -539,7 +612,6 @@ class OpenAIRealtime2Extension(AsyncMLLMBaseExtension):
         )
         await self.conn.send_request(su)
 
-
     async def _handle_tool_call(
         self, tool_call_id: str, name: str, arguments: str
     ) -> None:
@@ -548,8 +620,6 @@ class OpenAIRealtime2Extension(AsyncMLLMBaseExtension):
         )
         await self.send_server_function_call(
             MLLMServerFunctionCall(
-                call_id=tool_call_id,
-                name=name,
-                arguments=arguments
+                call_id=tool_call_id, name=name, arguments=arguments
             )
         )

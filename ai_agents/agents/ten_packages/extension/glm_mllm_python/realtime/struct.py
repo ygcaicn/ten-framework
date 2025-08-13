@@ -613,7 +613,9 @@ ServerToClientMessages = Union[
 @dataclass
 class ClientToServerMessage:
     event_id: str = field(default_factory=generate_event_id)
-    client_timestamp: int = field(default_factory=lambda: int(time.time() * 1000))
+    client_timestamp: int = field(
+        default_factory=lambda: int(time.time() * 1000)
+    )
 
 
 @dataclass

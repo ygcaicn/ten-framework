@@ -63,6 +63,7 @@ from .realtime.struct import (
     UserMessageItemParam,
 )
 
+
 # ------------------------------
 # Config
 # ------------------------------
@@ -170,23 +171,33 @@ class GLMRealtime2Extension(AsyncMLLMBaseExtension):
                         case SessionCreated():
                             self.connected = True
                             self.session_id = message.session.id
-                            self.ten_env.log_info(f"[GLM] session created: {self.session_id}")
+                            self.ten_env.log_info(
+                                f"[GLM] session created: {self.session_id}"
+                            )
                             await self._update_session()
                             await self._resume_context(self.message_context)
-                            await self.send_server_session_ready(MLLMServerSessionReady())
+                            await self.send_server_session_ready(
+                                MLLMServerSessionReady()
+                            )
 
                         case SessionUpdated():
                             # GLM may not emit; keep for parity
                             self.ten_env.log_debug("[GLM] session updated")
-                            await self.send_server_session_ready(MLLMServerSessionReady())
+                            await self.send_server_session_ready(
+                                MLLMServerSessionReady()
+                            )
 
                         case ItemCreated():
-                            self.ten_env.log_debug(f"[GLM] item created {message.item}")
+                            self.ten_env.log_debug(
+                                f"[GLM] item created {message.item}"
+                            )
 
                         # ---- responses lifecycle ----
                         case ResponseCreated():
                             response_id = message.response.id
-                            self.ten_env.log_debug(f"[GLM] response created {response_id}")
+                            self.ten_env.log_debug(
+                                f"[GLM] response created {response_id}"
+                            )
 
                         case ResponseDone():
                             rid = message.response.id
@@ -206,7 +217,9 @@ class GLMRealtime2Extension(AsyncMLLMBaseExtension):
                                     content=self.response_transcript,
                                     delta=message.delta or "",
                                     final=False,
-                                    metadata={"session_id": self.session_id or "-1"},
+                                    metadata={
+                                        "session_id": self.session_id or "-1"
+                                    },
                                 )
                             )
 
@@ -215,10 +228,13 @@ class GLMRealtime2Extension(AsyncMLLMBaseExtension):
                                 continue
                             await self.send_server_output_text(
                                 MLLMServerOutputTranscript(
-                                    content=self.response_transcript or (message.transcript or ""),
+                                    content=self.response_transcript
+                                    or (message.transcript or ""),
                                     delta="",
                                     final=True,
-                                    metadata={"session_id": self.session_id or "-1"},
+                                    metadata={
+                                        "session_id": self.session_id or "-1"
+                                    },
                                 )
                             )
                             self.response_transcript = ""
@@ -226,16 +242,22 @@ class GLMRealtime2Extension(AsyncMLLMBaseExtension):
                         # ---- assistant audio ----
                         case ResponseAudioDelta():
                             audio_bytes = base64.b64decode(message.delta)
-                            await self.send_server_output_audio_data(audio_bytes)
+                            await self.send_server_output_audio_data(
+                                audio_bytes
+                            )
 
                         case ResponseAudioDone():
                             # no-op
                             pass
 
                         case ResponseOutputItemAdded():
-                            self.ten_env.log_debug(f"[GLM] output item added {message.output_index} {message.item}")
+                            self.ten_env.log_debug(
+                                f"[GLM] output item added {message.output_index} {message.item}"
+                            )
                         case ResponseOutputItemDone():
-                            self.ten_env.log_debug(f"[GLM] output item done {message.item}")
+                            self.ten_env.log_debug(
+                                f"[GLM] output item done {message.item}"
+                            )
 
                         # ---- input (user ASR) ----
                         case ItemInputAudioTranscriptionCompleted():
@@ -245,28 +267,39 @@ class GLMRealtime2Extension(AsyncMLLMBaseExtension):
                                     content=txt,
                                     delta=txt,
                                     final=True,
-                                    metadata={"session_id": self.session_id or "-1"},
+                                    metadata={
+                                        "session_id": self.session_id or "-1"
+                                    },
                                 )
                             )
                             self.request_transcript = ""
 
                         case ItemInputAudioTranscriptionFailed():
-                            self.ten_env.log_warn(f"[GLM] input transcription failed: {message.error}")
+                            self.ten_env.log_warn(
+                                f"[GLM] input transcription failed: {message.error}"
+                            )
                             self.request_transcript = ""
 
                         # ---- server VAD ----
                         case InputAudioBufferSpeechStarted():
                             # interrupt current assistant output
                             if self.config.server_vad:
-                                await self.send_server_interrupted(sos=MLLMServerInterrupt())
+                                await self.send_server_interrupted(
+                                    sos=MLLMServerInterrupt()
+                                )
                             if response_id and self.response_transcript:
-                                transcript = self.response_transcript + "[interrupted]"
+                                transcript = (
+                                    self.response_transcript + "[interrupted]"
+                                )
                                 await self.send_server_output_text(
                                     MLLMServerOutputTranscript(
                                         content=transcript,
                                         delta=None,
                                         final=True,
-                                        metadata={"session_id": self.session_id or "-1"},
+                                        metadata={
+                                            "session_id": self.session_id
+                                            or "-1"
+                                        },
                                     )
                                 )
                                 self.response_transcript = ""
@@ -289,14 +322,20 @@ class GLMRealtime2Extension(AsyncMLLMBaseExtension):
 
                         # ---- errors ----
                         case ErrorMessage():
-                            self.ten_env.log_error(f"[GLM] error: {message.error}")
+                            self.ten_env.log_error(
+                                f"[GLM] error: {message.error}"
+                            )
 
                         case _:
-                            self.ten_env.log_debug(f"[GLM] unhandled message: {message}")
+                            self.ten_env.log_debug(
+                                f"[GLM] unhandled message: {message}"
+                            )
 
                 except Exception as e:
                     traceback.print_exc()
-                    self.ten_env.log_error(f"[GLM] error processing message {message}: {e}")
+                    self.ten_env.log_error(
+                        f"[GLM] error processing message {message}: {e}"
+                    )
 
             self.ten_env.log_info("[GLM] client loop finished")
         except Exception as e:
@@ -322,7 +361,9 @@ class GLMRealtime2Extension(AsyncMLLMBaseExtension):
 
     # ---------- client → provider ----------
 
-    async def send_audio(self, frame: AudioFrame, session_id: str | None) -> bool:
+    async def send_audio(
+        self, frame: AudioFrame, session_id: str | None
+    ) -> bool:
         """GLM expects WAV; buffer PCM and periodically send small WAV chunks."""
         self.session_id = session_id
         if not self.connected or not self.conn:
@@ -342,7 +383,9 @@ class GLMRealtime2Extension(AsyncMLLMBaseExtension):
     async def on_data(self, ten_env: AsyncTenEnv, data: Data) -> None:
         await super().on_data(ten_env, data)
 
-    async def send_client_message_item(self, item: MLLMClientMessageItem, session_id: str | None = None) -> None:
+    async def send_client_message_item(
+        self, item: MLLMClientMessageItem, session_id: str | None = None
+    ) -> None:
         if not self.conn:
             return
         match item.role:
@@ -350,7 +393,12 @@ class GLMRealtime2Extension(AsyncMLLMBaseExtension):
                 await self.conn.send_request(
                     ItemCreate(
                         item=UserMessageItemParam(
-                            content=[{"type": ContentType.InputText, "text": item.content or ""}]
+                            content=[
+                                {
+                                    "type": ContentType.InputText,
+                                    "text": item.content or "",
+                                }
+                            ]
                         )
                     )
                 )
@@ -358,14 +406,21 @@ class GLMRealtime2Extension(AsyncMLLMBaseExtension):
                 await self.conn.send_request(
                     ItemCreate(
                         item=AssistantMessageItemParam(
-                            content=[{"type": ContentType.Text, "text": item.content or ""}]
+                            content=[
+                                {
+                                    "type": ContentType.Text,
+                                    "text": item.content or "",
+                                }
+                            ]
                         )
                     )
                 )
             case _:
                 self.ten_env.log_error(f"[GLM] unknown role: {item.role}")
 
-    async def send_client_create_response(self, session_id: str | None = None) -> None:
+    async def send_client_create_response(
+        self, session_id: str | None = None
+    ) -> None:
         if not self.conn:
             return
         await self.conn.send_request(ResponseCreate())
@@ -374,22 +429,32 @@ class GLMRealtime2Extension(AsyncMLLMBaseExtension):
         self.available_tools.append(tool)
         await self._update_session()
 
-    async def send_client_function_call_output(self, function_call_output: MLLMClientFunctionCallOutput) -> None:
+    async def send_client_function_call_output(
+        self, function_call_output: MLLMClientFunctionCallOutput
+    ) -> None:
         """GLM tool output has no call_id field; return as FunctionCallOutputItemParam(output=...)."""
         if not self.conn:
             return
         await self.conn.send_request(
             ItemCreate(
                 item=FunctionCallOutputItemParam(
-                    output=json.dumps(self._convert_to_content_parts(function_call_output.output))
-                    if not isinstance(function_call_output.output, str)
-                    else function_call_output.output
+                    output=(
+                        json.dumps(
+                            self._convert_to_content_parts(
+                                function_call_output.output
+                            )
+                        )
+                        if not isinstance(function_call_output.output, str)
+                        else function_call_output.output
+                    )
                 )
             )
         )
         await self.conn.send_request(ResponseCreate())
 
-    async def _resume_context(self, messages: list[MLLMClientMessageItem]) -> None:
+    async def _resume_context(
+        self, messages: list[MLLMClientMessageItem]
+    ) -> None:
         for m in messages:
             try:
                 await self.send_client_message_item(m)
@@ -457,11 +522,15 @@ class GLMRealtime2Extension(AsyncMLLMBaseExtension):
                     t["parameters"]["required"].append(p.name)
             return t
 
-        tools = [tool_dict(t) for t in self.available_tools] if self.available_tools else []
+        tools = (
+            [tool_dict(t) for t in self.available_tools]
+            if self.available_tools
+            else []
+        )
         su = SessionUpdate(
             session=SessionUpdateParams(
                 instructions=self.config.prompt,
-                input_audio_format=AudioFormats.PCM,   # GLM needs WAV input
+                input_audio_format=AudioFormats.PCM,  # GLM needs WAV input
                 output_audio_format=AudioFormats.PCM,
                 tools=tools,
             )
