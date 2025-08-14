@@ -55,7 +55,9 @@ class ExtensionTesterParams(ExtensionTester):
             ten_env.stop_test()
         elif name == "error":
             if self.error_received:
-                ten_env.log_info(f"Error already received, ignoring further errors.")
+                ten_env.log_info(
+                    f"Error already received, ignoring further errors."
+                )
                 return
 
             ten_env.log_info("Received error event.")
