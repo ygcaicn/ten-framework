@@ -71,7 +71,10 @@ def test_initialization_and_connection():
 
     MockGoogleASRClient = MagicMock(side_effect=fake_init)
 
-    with patch("ten_packages.extension.google_asr_python.extension.GoogleASRClient", MockGoogleASRClient):
+    with patch(
+        "ten_packages.extension.google_asr_python.extension.GoogleASRClient",
+        MockGoogleASRClient,
+    ):
         property_json = {
             "params": {
                 "project_id": "fake-project-id",
