@@ -84,6 +84,11 @@ class ExtensionTesterRobustness(ExtensionTester):
                 self._send_tts_request(ten_env, next_request_id, next_text)
 
         elif name == "error":
+            if self.error_received:
+                ten_env.log_info(
+                    f"Error already received, ignoring further errors."
+                )
+                return
             ten_env.log_info("Received error, stopping test.")
             self.error_received = True
             ten_env.log_info("About to call ten_env.stop_test() due to error")
