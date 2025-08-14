@@ -54,6 +54,10 @@ class ExtensionTesterParams(ExtensionTester):
             self.audio_end_received = True
             ten_env.stop_test()
         elif name == "error":
+            if self.error_received:
+                ten_env.log_info(f"Error already received, ignoring further errors.")
+                return
+
             ten_env.log_info("Received error event.")
             self.error_received = True
             json_str, _ = data.get_property_to_json("")
