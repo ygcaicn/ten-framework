@@ -74,7 +74,7 @@ class ExtensionTesterParams(ExtensionTester):
             audio_frame.unlock_buf(buf)
 
 
-@patch("google_tts_python.google_tts.GoogleTTS")
+@patch("google_tts_python.extension.GoogleTTS")
 def test_default_params(MockGoogleTTS):
     """Test that the extension works with default parameters."""
     # Mock the GoogleTTS class
@@ -110,7 +110,7 @@ def test_default_params(MockGoogleTTS):
     assert tester.audio_end_received, "Audio end event was not received"
 
 
-@patch("google_tts_python.google_tts.GoogleTTS")
+@patch("google_tts_python.extension.GoogleTTS")
 def test_custom_params(MockGoogleTTS):
     """Test that the extension works with custom parameters."""
     # Mock the GoogleTTS class
@@ -146,7 +146,7 @@ def test_custom_params(MockGoogleTTS):
     assert tester.audio_end_received, "Audio end event was not received"
 
 
-@patch("google_tts_python.google_tts.GoogleTTS")
+@patch("google_tts_python.extension.GoogleTTS")
 def test_sample_rate_params(MockGoogleTTS):
     """Test that the extension works with different sample rates."""
     # Mock the GoogleTTS class
@@ -188,7 +188,7 @@ def test_sample_rate_params(MockGoogleTTS):
         ), f"Audio end event was not received for sample rate {sample_rate}"
 
 
-@patch("google_tts_python.google_tts.GoogleTTS")
+@patch("google_tts_python.extension.GoogleTTS")
 def test_voice_params(MockGoogleTTS):
     """Test that the extension works with different voice parameters."""
     # Mock the GoogleTTS class
@@ -251,7 +251,7 @@ def test_voice_params(MockGoogleTTS):
         ), f"Audio end event was not received for voice config {voice_config}"
 
 
-@patch("google_tts_python.google_tts.GoogleTTS")
+@patch("google_tts_python.extension.GoogleTTS")
 def test_audio_params(MockGoogleTTS):
     """Test that the extension works with different audio parameters."""
     # Mock the GoogleTTS class
@@ -297,7 +297,7 @@ def test_audio_params(MockGoogleTTS):
         ), f"Audio end event was not received for audio config {audio_config}"
 
 
-@patch("google_tts_python.google_tts.GoogleTTS")
+@patch("google_tts_python.extension.GoogleTTS")
 def test_missing_credentials(MockGoogleTTS):
     """Test that the extension handles missing credentials correctly."""
     # This test should receive an error event when credentials are missing
