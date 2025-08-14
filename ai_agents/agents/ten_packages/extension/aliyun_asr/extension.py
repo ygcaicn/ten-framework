@@ -105,7 +105,9 @@ class AliyunASRExtension(AsyncASRBaseExtension):
         self.connected = True
 
     def _on_close(self, *args, **kwargs):
-        self.ten_env.log_info(f"aliyun_asr event callback on_close: {args}, {kwargs}")
+        self.ten_env.log_info(
+            f"aliyun_asr event callback on_close: {args}, {kwargs}"
+        )
         self.connected = False
         if not self.stopped:
             self.ten_env.log_warn(
@@ -131,7 +133,9 @@ class AliyunASRExtension(AsyncASRBaseExtension):
             if len(sentence) == 0:
                 return
 
-            is_final = result_data.get("header", {}).get("name") == "SentenceEnd"
+            is_final = (
+                result_data.get("header", {}).get("name") == "SentenceEnd"
+            )
             self.ten_env.log_info(
                 f"aliyun_asr got sentence: [{sentence}], is_final: {is_final}"
             )
@@ -223,7 +227,9 @@ class AliyunASRExtension(AsyncASRBaseExtension):
     def is_connected(self) -> bool:
         return self.connected
 
-    async def send_audio(self, frame: AudioFrame, session_id: str | None) -> bool:
+    async def send_audio(
+        self, frame: AudioFrame, session_id: str | None
+    ) -> bool:
         self.session_id = session_id
 
         if self.client is None:

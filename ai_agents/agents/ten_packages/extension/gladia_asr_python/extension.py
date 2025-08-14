@@ -137,7 +137,9 @@ class GladiaASRExtension(AsyncASRBaseExtension):
         except Exception as e:
             await self._handle_error(e)
 
-    async def send_audio(self, frame: AudioFrame, session_id: str | None) -> None:
+    async def send_audio(
+        self, frame: AudioFrame, session_id: str | None
+    ) -> None:
         try:
             if self.ws is None:
                 return

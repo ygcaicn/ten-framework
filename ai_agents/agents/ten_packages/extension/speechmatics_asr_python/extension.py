@@ -69,7 +69,9 @@ class SpeechmaticsASRExtension(AsyncASRBaseExtension):
             return await self.client.internal_drain_mute_pkg()
         return await self.client.internal_drain_disconnect()
 
-    async def send_audio(self, frame: AudioFrame, session_id: str | None) -> bool:
+    async def send_audio(
+        self, frame: AudioFrame, session_id: str | None
+    ) -> bool:
         self.session_id = session_id
         if self.client is None:
             return False
@@ -79,7 +81,8 @@ class SpeechmaticsASRExtension(AsyncASRBaseExtension):
 
     def is_connected(self) -> bool:
         return bool(
-            self.client and getattr(self.client.client, "session_running", False)
+            self.client
+            and getattr(self.client.client, "session_running", False)
         )
 
     def input_audio_sample_rate(self) -> int:

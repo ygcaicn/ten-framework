@@ -73,7 +73,9 @@ class SpeechmaticsASRClient:
             self.audio_dumper = Dumper(dump_file_path)
 
         self.audio_settings: speechmatics.models.AudioSettings | None = None
-        self.transcription_config: speechmatics.models.TranscriptionConfig | None = None
+        self.transcription_config: (
+            speechmatics.models.TranscriptionConfig | None
+        ) = None
         self.client: speechmatics.client.WebsocketClient | None = None
         self.on_asr_result: Optional[
             Callable[[ASRResult], Coroutine[object, object, None]]
@@ -116,7 +118,9 @@ class SpeechmaticsASRClient:
             max_delay_mode=self.config.max_delay_mode,
             additional_vocab=additional_vocab,
             operating_point=(
-                self.config.operating_point if self.config.operating_point else None
+                self.config.operating_point
+                if self.config.operating_point
+                else None
             ),
         )
 
@@ -172,7 +176,9 @@ class SpeechmaticsASRClient:
         if self.config.dump:
             await self.audio_dumper.start()
 
-    async def recv_audio_frame(self, frame: AudioFrame, session_id: str | None) -> None:
+    async def recv_audio_frame(
+        self, frame: AudioFrame, session_id: str | None
+    ) -> None:
         frame_buf = frame.get_buf()
         if not frame_buf:
             self.ten_env.log_warn("send_frame: empty audio_frame detected.")
@@ -240,7 +246,9 @@ class SpeechmaticsASRClient:
                 asyncio.create_task(self._emit_error(error, None))
 
             self.ten_env.log_info(
-                "run end, client_needs_stopping:{}".format(self.client_needs_stopping)
+                "run end, client_needs_stopping:{}".format(
+                    self.client_needs_stopping
+                )
             )
 
             if self.client_needs_stopping:
@@ -332,7 +340,9 @@ class SpeechmaticsASRClient:
             asyncio.create_task(self._emit_error(error, None))
 
     def _handle_transcript_sentence_final_mode(self, msg):
-        self.ten_env.log_info(f"_handle_transcript_sentence_final_mode, msg: {msg}")
+        self.ten_env.log_info(
+            f"_handle_transcript_sentence_final_mode, msg: {msg}"
+        )
 
         try:
             results = msg.get("results", {})
@@ -347,7 +357,9 @@ class SpeechmaticsASRClient:
                         end_ms = result.get("end_time", 0) * 1000
                         duration_ms = int(end_ms - start_ms)
                         actual_start_ms = int(
-                            self.timeline.get_audio_duration_before_time(start_ms)
+                            self.timeline.get_audio_duration_before_time(
+                                start_ms
+                            )
                             + self.sent_user_audio_duration_ms_before_last_reset
                         )
                         result_type = result.get("type", "")
@@ -362,7 +374,9 @@ class SpeechmaticsASRClient:
                         self.cache_words.append(word)
 
                 if result.get("is_eos") == True:
-                    sentence = convert_words_to_sentence(self.cache_words, self.config)
+                    sentence = convert_words_to_sentence(
+                        self.cache_words, self.config
+                    )
                     start_ms = get_sentence_start_ms(self.cache_words)
                     duration_ms = get_sentence_duration_ms(self.cache_words)
 
@@ -381,7 +395,9 @@ class SpeechmaticsASRClient:
 
             # if the transcript is not empty, send it as a partial transcript
             if self.cache_words:
-                sentence = convert_words_to_sentence(self.cache_words, self.config)
+                sentence = convert_words_to_sentence(
+                    self.cache_words, self.config
+                )
                 start_ms = get_sentence_start_ms(self.cache_words)
                 duration_ms = get_sentence_duration_ms(self.cache_words)
 
@@ -461,4 +477,6 @@ class SpeechmaticsASRClient:
         Emit an error message to the extension.
         """
         if callable(self.on_error):
-            await self.on_error(error, vendor_info)  # pylint: disable=not-callable
+            await self.on_error(
+                error, vendor_info
+            )  # pylint: disable=not-callable
