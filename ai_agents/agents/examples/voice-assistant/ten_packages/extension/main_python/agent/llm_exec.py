@@ -66,7 +66,9 @@ class LLMExec:
         if self.current_request_id:
             request_id = self.current_request_id
             self.current_request_id = None
-            await _send_cmd(self.ten_env, "abort", "llm", {"request_id": request_id})
+            await _send_cmd(
+                self.ten_env, "abort", "llm", {"request_id": request_id}
+            )
         if self.current_task:
             self.current_task.cancel()
 
