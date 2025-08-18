@@ -1,5 +1,7 @@
 import asyncio
+import json
 import time
+from typing import Literal
 
 from .agent.decorators import agent_event_handler
 from ten_runtime import (
@@ -37,8 +39,12 @@ class MainControlExtension(AsyncExtension):
 
         self.stopped: bool = False
         self._rtc_user_count: int = 0
-        self.current_metadata: dict = {"session_id": "0", "turn_id": -1}
         self.sentence_fragment: str = ""
+        self.turn_id: int = 0
+        self.session_id: str = "0"
+
+    def _current_metadata(self) -> dict:
+        return {"session_id": self.session_id, "turn_id": self.turn_id}
 
     async def on_init(self, ten_env: AsyncTenEnv):
         self.ten_env = ten_env
@@ -76,29 +82,32 @@ class MainControlExtension(AsyncExtension):
 
     @agent_event_handler(ASRResultEvent)
     async def _on_asr_result(self, event: ASRResultEvent):
-        self.current_metadata = {
-            "session_id": event.metadata.get("session_id", "100"),
-            "turn_id": event.metadata.get("turn_id", -1),
-        }
-        stream_id = int(self.current_metadata["session_id"])
+        self.session_id = event.metadata.get("session_id", "100")
+        stream_id = int(self.session_id)
         if not event.text:
             return
         if event.final or len(event.text) > 2:
             await self._interrupt()
         if event.final:
+            self.turn_id += 1
             await self.agent.queue_llm_input(event.text)
         await self._send_transcript("user", event.text, event.final, stream_id)
 
     @agent_event_handler(LLMResponseEvent)
     async def _on_llm_response(self, event: LLMResponseEvent):
-        if not event.is_final:
+        if not event.is_final and event.type == "message":
             sentences, self.sentence_fragment = parse_sentences(
                 self.sentence_fragment, event.delta
             )
             for s in sentences:
                 await self._send_to_tts(s, False)
+
         await self._send_transcript(
-            "assistant", event.text, event.is_final, 100
+            "assistant",
+            event.text,
+            event.is_final,
+            100,
+            data_type=("reasoning" if event.type == "reasoning" else "text"),
         )
 
     async def on_start(self, ten_env: AsyncTenEnv):
@@ -117,24 +126,51 @@ class MainControlExtension(AsyncExtension):
 
     # === helpers ===
     async def _send_transcript(
-        self, role: str, text: str, final: bool, stream_id: int
+        self,
+        role: str,
+        text: str,
+        final: bool,
+        stream_id: int,
+        data_type: Literal["text", "reasoning"] = "text",
     ):
         """
         Sends the transcript (ASR or LLM output) to the message collector.
         """
-        await _send_data(
-            self.ten_env,
-            "message",
-            "message_collector",
-            {
-                "data_type": "transcribe",
-                "role": role,
-                "text": text,
-                "text_ts": int(time.time() * 1000),
-                "is_final": final,
-                "stream_id": stream_id,
-            },
-        )
+        if data_type == "text":
+            await _send_data(
+                self.ten_env,
+                "message",
+                "message_collector",
+                {
+                    "data_type": "transcribe",
+                    "role": role,
+                    "text": text,
+                    "text_ts": int(time.time() * 1000),
+                    "is_final": final,
+                    "stream_id": stream_id,
+                },
+            )
+        elif data_type == "reasoning":
+            await _send_data(
+                self.ten_env,
+                "message",
+                "message_collector",
+                {
+                    "data_type": "raw",
+                    "role": role,
+                    "text": json.dumps(
+                        {
+                            "type": "reasoning",
+                            "data": {
+                                "text": text,
+                            },
+                        }
+                    ),
+                    "text_ts": int(time.time() * 1000),
+                    "is_final": final,
+                    "stream_id": stream_id,
+                },
+            )
         self.ten_env.log_info(
             f"[MainControlExtension] Sent transcript: {role}, final={final}, text={text}"
         )
@@ -143,7 +179,7 @@ class MainControlExtension(AsyncExtension):
         """
         Sends a sentence to the TTS system.
         """
-        request_id = str(uuid.uuid4())
+        request_id = f"tts-request-{self.turn_id}"
         await _send_data(
             self.ten_env,
             "tts_text_input",
@@ -152,7 +188,7 @@ class MainControlExtension(AsyncExtension):
                 "request_id": request_id,
                 "text": text,
                 "text_input_end": is_final,
-                "metadata": self.current_metadata,
+                "metadata": self._current_metadata(),
             },
         )
         self.ten_env.log_info(
@@ -163,10 +199,10 @@ class MainControlExtension(AsyncExtension):
         """
         Interrupts ongoing LLM and TTS generation. Typically called when user speech is detected.
         """
+        self.sentence_fragment = ""
         await self.agent.flush_llm()
         await _send_data(
             self.ten_env, "tts_flush", "tts", {"flush_id": str(uuid.uuid4())}
         )
-        await _send_data(self.ten_env, "flush", "message_collector")
         await _send_cmd(self.ten_env, "flush", "agora_rtc")
         self.ten_env.log_info("[MainControlExtension] Interrupt signal sent")

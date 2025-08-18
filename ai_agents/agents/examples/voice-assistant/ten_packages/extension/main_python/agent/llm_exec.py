@@ -115,9 +115,7 @@ class LLMExec:
                 text = self.current_text
                 self.current_text = None
                 if self.on_response and text:
-                    await self.on_response(
-                        self.ten_env, "", text, True
-                    )
+                    await self.on_response(self.ten_env, "", text, True)
             except Exception as e:
                 self.ten_env.log_error(
                     f"Error processing input queue: {traceback.format_exc()}"
