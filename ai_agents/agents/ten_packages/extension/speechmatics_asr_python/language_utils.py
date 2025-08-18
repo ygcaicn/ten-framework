@@ -17,7 +17,6 @@ LANGUAGE_MAP = {
     "es-ES": "es",
     "ar-AE": "ar",
     "hi-IN": "hi",
-    "es-ES": "es",
 }
 
 
