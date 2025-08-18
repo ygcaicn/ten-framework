@@ -36,7 +36,6 @@ class Agent:
             self._on_llm_reasoning_response
         )  # callback handled internally
 
-
         # Start consumers
         self._asr_consumer = asyncio.create_task(self._consume_asr())
         self._llm_consumer = asyncio.create_task(self._consume_llm())
