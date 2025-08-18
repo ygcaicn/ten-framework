@@ -18,6 +18,8 @@ from ten_ai_base.struct import (
     LLMResponse,
     LLMResponseMessageDelta,
     LLMResponseMessageDone,
+    LLMResponseReasoningDelta,
+    LLMResponseReasoningDone,
     LLMResponseToolCall,
     parse_llm_response,
 )
@@ -38,6 +40,9 @@ class LLMExec:
         self.input_queue = AsyncQueue()
         self.stopped = False
         self.on_response: Optional[
+            Callable[[AsyncTenEnv, str, str, bool], Awaitable[None]]
+        ] = None
+        self.on_reasoning_response: Optional[
             Callable[[AsyncTenEnv, str, str, bool], Awaitable[None]]
         ] = None
         self.on_tool_call: Optional[
@@ -184,6 +189,19 @@ class LLMExec:
                 text = llm_output.content
                 if self.on_response and text:
                     await self.on_response(self.ten_env, "", text, True)
+            case LLMResponseReasoningDelta():
+                delta = llm_output.delta
+                text = llm_output.content
+                if delta and self.on_reasoning_response:
+                    await self.on_reasoning_response(
+                        self.ten_env, delta, text, False
+                    )
+            case LLMResponseReasoningDone():
+                text = llm_output.content
+                if self.on_reasoning_response and text:
+                    await self.on_reasoning_response(
+                        self.ten_env, "", text, True
+                    )
             case LLMResponseToolCall():
                 self.ten_env.log_info(
                     f"_handle_llm_response: invoking tool call {llm_output.name}"
