@@ -1,7 +1,7 @@
 {
     "params": {
-        "api_key": "${env:MINIMAX_TTS_KEY|}",
-        "group_id": "${env:MINIMAX_TTS_GROUPID|}",
+        "api_key": "${env:MINIMAX_TTS_API_KEY|}",
+        "group_id": "${env:MINIMAX_TTS_GROUP_ID|}",
         "model": "speech-02-turbo",
         "audio_setting": {
             "sample_rate": 16000
