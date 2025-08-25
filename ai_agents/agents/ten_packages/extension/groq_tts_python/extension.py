@@ -255,14 +255,6 @@ class GroqTTSExtension(AsyncTTS2BaseExtension):
                 f"Request ID {t.request_id} was flushed, ignoring TTS request"
             )
             self.ten_env.log_warn(error_msg)
-            await self.send_tts_error(
-                t.request_id,
-                ModuleError(
-                    message=error_msg,
-                    module="tts",
-                    code=ModuleErrorCode.NON_FATAL_ERROR.value,
-                ),
-            )
             return
 
         if t.request_id in self.last_end_request_ids:
