@@ -130,7 +130,6 @@ if __name__ == "__main__":
 
         # test synthesize with retry
         f = open("test.pcm", "wb")
-
         try:
             async for chunk in tts.synthesize_with_retry("Hello, world!"):
                 _len = len(chunk)
@@ -138,10 +137,9 @@ if __name__ == "__main__":
                     f"received {_len} delay: {time.time() - t} bytes: {chunk[:10]}..."
                 )
                 f.write(chunk)
-            f.close()
         except Exception as e:
             print(f"error: {e}")
-            f.close()
+        f.close()
 
         n = 10
         while n > 0:
