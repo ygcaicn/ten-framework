@@ -1,5 +1,6 @@
 typing_extensions
-pytest==8.3.4
+pytest
 websockets~=14.0
-openai==1.99.3
+openai>=1.99.3
 pydantic
+samplerate
