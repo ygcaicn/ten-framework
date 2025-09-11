@@ -143,7 +143,8 @@ class OpenAIASRExtension(AsyncASRBaseExtension, AsyncOpenAIAsrListener):
 
     @override
     def input_audio_sample_rate(self) -> int:
-        return 16000
+        assert self.config is not None
+        return self.config.params.sample_rate
 
     @override
     async def send_audio(
